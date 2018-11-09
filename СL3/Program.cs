@@ -10,11 +10,15 @@ namespace СL3
     {
         static void Main(string[] args)
         {
-            const int size = 100;
+            const int size = 10;
             var m1 = new Matrix(size);
             var m2 = new Matrix(size);
 
-            Console.WriteLine($"{m1.ToString()}");
+            Console.WriteLine($"{m1}\n{m2}");
+
+            m1.Multiplication(m2);
+
+            Console.WriteLine($"{m1}");
 
             Console.ReadLine();
         }
@@ -24,6 +28,8 @@ namespace СL3
     {
         public int[,] m;
         private int _size;
+
+        
         public Matrix(int size)
         {
             _size = size;
@@ -36,7 +42,10 @@ namespace СL3
                     m[i, y] = rand.Next(1, 10);
         }
 
-        #region реализация IEnumerator
+        /// <summary>
+        /// реализация IEnumerator
+        /// </summary>
+        /// <returns></returns>
         public IEnumerator<int> GetEnumerator()
         {
 
@@ -44,9 +53,7 @@ namespace СL3
                 for (int y = 0; y < _size; y++)
                     yield return m[i, y];
         }
-
-        //IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        #endregion
+        
 
         public override string ToString()
         {
@@ -60,6 +67,27 @@ namespace СL3
             }
             
             return str;
+        }
+
+        /// <summary>
+        /// Умножение матриц, параметр - вторая матрица
+        /// </summary>
+        /// <param name="m2"></param>
+        /// <returns></returns>
+        public int[,] Multiplication(Matrix m2)
+        {
+            if (m.GetLength(1) != m2.m.GetLength(0)) throw new Exception("Матрицы нельзя перемножить");
+
+            int[,] r = new int[m.GetLength(0), m2.m.GetLength(1)];
+            Parallel.For(0, m.GetLength(0), (i) =>
+            {
+                for (int j = 0; j < m2.m.GetLength(1); j++)
+                    for (int k = 0; k < m2.m.GetLength(0); k++)
+                    {
+                        r[i, j] += m[i, k] * m2.m[k, j];
+                    }
+            });
+            return m=r;
         }
     }
 }
