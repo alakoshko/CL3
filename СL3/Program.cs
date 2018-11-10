@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
 using System.Threading.Tasks;
+using System.Collections;
+using System.Diagnostics;
 
 namespace СL3
 {
@@ -10,84 +13,82 @@ namespace СL3
     {
         static void Main(string[] args)
         {
-            const int size = 10;
-            var m1 = new Matrix(size);
-            var m2 = new Matrix(size);
+            //1. Даны 2 двумерных матрицы. Размерность 100х100 каждая. 
+            //Напишите приложение, производящее параллельное умножение матриц. 
+            //Матрицы заполняются случайными целыми числами от 0 до10.
+            #region 
+            //const int size = 10;
+            //var m1 = new Matrix(size);
+            //var m2 = new Matrix(size);
 
-            Console.WriteLine($"{m1}\n{m2}");
+            //Console.WriteLine($"{m1}\n{m2}");
 
-            m1.Multiplication(m2);
+            //m1.Multiplication(m2);
 
-            Console.WriteLine($"{m1}");
+            //Console.WriteLine($"{m1}");
+            #endregion
+
+            #region
+            //Создание файлов
+            var swatch = Stopwatch.StartNew();
+            CreateFiles();
+            swatch.Stop();
+            Console.WriteLine($"Elepsed time for creation files: {swatch.Elapsed}");
+
+
+
+            #endregion
 
             Console.ReadLine();
         }
-    }
 
-    class Matrix
-    {
-        public int[,] m;
-        private int _size;
-
-        
-        public Matrix(int size)
+        const string sPath = "..\\..\\files\\";
+        static public string GetRandomFileName()
         {
-            _size = size;
-            m = new int[size, size];
-
-            var rand = new Random();
-
-            for (int i = 0; i < size; i++)
-                for (int y = 0; y < size; y++)
-                    m[i, y] = rand.Next(1, 10);
+            string path = Path.GetRandomFileName();
+            path = path.Replace(".", ""); // Remove period.
+            return sPath + path.Substring(0, 8)+".txt";  // Return 8 character string
         }
 
-        /// <summary>
-        /// реализация IEnumerator
-        /// </summary>
-        /// <returns></returns>
-        public IEnumerator<int> GetEnumerator()
+        static void CreateFiles()
         {
-
-            for (int i = 0; i < _size; i++)
-                for (int y = 0; y < _size; y++)
-                    yield return m[i, y];
-        }
-        
-
-        public override string ToString()
-        {
-            string str = "";
-
-            for (int i = 0; i < _size; i++)
+            var random = new Random();
+            Parallel.For(0, 100, i =>
             {
-                str = str + $"\n";
-                for (int y = 0; y < _size; y++)
-                    str = str + $"{m[i, y]} ";
-            }
-            
-            return str;
-        }
+                string filename = GetRandomFileName();
+                byte[] info = new UTF8Encoding(true).GetBytes($"{random.Next(1, 2)};{random.NextDouble() * random.Next(100, 10000)};{random.NextDouble() * random.Next(100, 10000)}");
 
-        /// <summary>
-        /// Умножение матриц, параметр - вторая матрица
-        /// </summary>
-        /// <param name="m2"></param>
-        /// <returns></returns>
-        public int[,] Multiplication(Matrix m2)
-        {
-            if (m.GetLength(1) != m2.m.GetLength(0)) throw new Exception("Матрицы нельзя перемножить");
-
-            int[,] r = new int[m.GetLength(0), m2.m.GetLength(1)];
-            Parallel.For(0, m.GetLength(0), (i) =>
-            {
-                for (int j = 0; j < m2.m.GetLength(1); j++)
-                    for (int k = 0; k < m2.m.GetLength(0); k++)
-                    {
-                        r[i, j] += m[i, k] * m2.m[k, j];
-                    }
+                using (var fs = new FileStream(filename, FileMode.CreateNew,
+                         FileAccess.Write, FileShare.None,
+                         4096, FileOptions.None))
+                {
+                    fs.Write(info, 0, info.Length);
+                }
             });
-            return m=r;
         }
+        
+        static double ReadCalc(string filename)
+        {
+            StreamReader sr = new StreamReader(filename);
+            int action = 0;
+            double v1 = 0;
+            double v2 = 0;
+            
+            string temp = sr.ReadLine();
+            sr.Close();
+
+            var strValue = temp.Split(';');
+            int.TryParse(strValue[0], out action);
+            double.TryParse(strValue[1], out v1);
+            double.TryParse(strValue[2], out v2);
+
+            if (action == 1)
+                return v1* v2;
+            else if (action == 2)
+                return v1/v2;
+
+            return 0;
+        }
+        
     }
 }
